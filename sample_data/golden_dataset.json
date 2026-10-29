@@ -1,0 +1,77 @@
+[
+  {
+    "id": "AAPL-2023-REV",
+    "company": "Apple Inc.",
+    "document": "apple_10k_2023.pdf",
+    "question": "What was Apple's total net sales in fiscal year 2023?",
+    "ground_truth_answer": "Apple's total net sales in fiscal 2023 were $383,285 million, compared to $394,328 million in 2022.",
+    "ground_truth_metrics": [
+      {
+        "metric_name": "Net Sales",
+        "value": 383285.0,
+        "unit": "USD Millions",
+        "period": "FY2023"
+      }
+    ],
+    "context_keywords": ["Net Sales", "383,285", "fiscal year ended September 30, 2023"],
+    "ground_truth_context": "Total net sales were $383,285 million in 2023, down 2.8% compared to $394,328 million in 2022."
+  },
+  {
+    "id": "AAPL-2023-RND",
+    "company": "Apple Inc.",
+    "document": "apple_10k_2023.pdf",
+    "question": "How much did Apple spend on Research and Development in fiscal 2023?",
+    "ground_truth_answer": "Research and development expense was $29,915 million in fiscal 2023.",
+    "ground_truth_metrics": [
+      {
+        "metric_name": "Research and Development",
+        "value": 29915.0,
+        "unit": "USD Millions",
+        "period": "FY2023"
+      }
+    ],
+    "context_keywords": ["Research and development", "29,915", "operating expenses"],
+    "ground_truth_context": "Research and development expense increased to $29,915 million in 2023 from $26,251 million in 2022."
+  },
+  {
+    "id": "NVDA-2024-REV",
+    "company": "NVIDIA Corporation",
+    "document": "nvidia_10k_2024.pdf",
+    "question": "What was NVIDIA's total revenue and Data Center revenue in fiscal 2024?",
+    "ground_truth_answer": "NVIDIA's total revenue for fiscal 2024 was $60,922 million, and Data Center revenue reached $47,525 million.",
+    "ground_truth_metrics": [
+      {
+        "metric_name": "Total Revenue",
+        "value": 60922.0,
+        "unit": "USD Millions",
+        "period": "FY2024"
+      },
+      {
+        "metric_name": "Data Center Revenue",
+        "value": 47525.0,
+        "unit": "USD Millions",
+        "period": "FY2024"
+      }
+    ],
+    "context_keywords": ["Data Center", "60,922", "47,525", "Compute & Networking"],
+    "ground_truth_context": "Revenue was $60,922 million for fiscal 2024, up 126% from a year ago. Data Center revenue was $47,525 million, up 217%."
+  },
+  {
+    "id": "NVDA-2024-MARGIN",
+    "company": "NVIDIA Corporation",
+    "document": "nvidia_10k_2024.pdf",
+    "question": "What was NVIDIA's GAAP gross margin in fiscal 2024?",
+    "ground_truth_answer": "GAAP gross margin for fiscal 2024 was 72.7%.",
+    "ground_truth_metrics": [
+      {
+        "metric_name": "GAAP Gross Margin",
+        "value": 72.7,
+        "unit": "%",
+        "period": "FY2024"
+      }
+    ],
+    "context_keywords": ["Gross margin", "72.7%", "fiscal 2024"],
+    "ground_truth_context": "GAAP gross margin was 72.7% for fiscal 2024, compared to 56.9% in the prior year."
+  }
+]
+
