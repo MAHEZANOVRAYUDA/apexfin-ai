@@ -67,6 +67,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     docList.innerHTML = "";
+
+    // Show active filter banner if a specific document is locked
+    if (currentDocumentId) {
+      const activeDoc = docs.find((d) => d.document_id === currentDocumentId);
+      const banner = document.createElement("div");
+      banner.style.cssText =
+        "display: flex; justify-content: space-between; align-items: center; background: var(--bg-tertiary); padding: 5px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 11px; border: 1px solid var(--accent-sky-subtle);";
+      banner.innerHTML = `
+        <span style="color: var(--accent-sky); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Fokus: ${
+          activeDoc ? escapeHtml(activeDoc.document_name) : "1 Dokumen"
+        }</span>
+        <button id="clear-filter-btn" style="background: none; border: none; color: var(--accent-rose); cursor: pointer; font-size: 11px; font-weight: 600; padding: 0 4px;" title="Cari di semua dokumen">✕ Hapus Filter</button>
+      `;
+      const clearBtn = banner.querySelector("#clear-filter-btn");
+      clearBtn.addEventListener("click", () => {
+        currentDocumentId = null;
+        renderDocumentsList(docs);
+      });
+      docList.appendChild(banner);
+    }
     docs.forEach((doc) => {
       const card = document.createElement("div");
       card.className = "doc-card";
@@ -193,22 +213,44 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 3. Eksekusi Kueri Analisis & Streaming SSE
+  function cleanQuery(str) {
+    if (!str) return "";
+    let s = str.trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    } else if (s.startsWith('"') || s.startsWith("'")) {
+      s = s.slice(1).trim();
+    }
+    return s;
+  }
+
   queryForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    const query = queryInput.value.trim();
+    const rawQuery = queryInput.value.trim();
+    const query = cleanQuery(rawQuery);
     if (!query) return;
     executeStreamingQuery(query);
   });
 
   document.querySelectorAll(".suggestion-btn[data-query]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      queryInput.value = btn.dataset.query;
-      executeStreamingQuery(btn.dataset.query);
+      const q = cleanQuery(btn.dataset.query);
+      queryInput.value = q;
+      // Auto-reset conflicting filter if template targets a different filing
+      if (q.toLowerCase().includes("apple") && currentDocumentId && currentDocumentId.toLowerCase().includes("nvidia")) {
+        currentDocumentId = null;
+        refreshDocumentsList();
+      } else if (q.toLowerCase().includes("nvidia") && currentDocumentId && currentDocumentId.toLowerCase().includes("apple")) {
+        currentDocumentId = null;
+        refreshDocumentsList();
+      }
+      executeStreamingQuery(q);
     });
   });
 
   function executeStreamingQuery(query) {
-    lastExecutedQuery = query;
+    const sanitizedQuery = cleanQuery(query);
+    lastExecutedQuery = sanitizedQuery;
     submitBtn.disabled = true;
 
     // Status Optimistik & Stepper
@@ -216,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
     stepperMsg.textContent = "Menghubungkan ke mesin Two-Stage Hybrid Retrieval...";
     setLoadingState("Mengeksekusi Pencarian Hibrida Vektor + Leksikal BM25...");
 
-    const streamUrl = `/api/v1/analysis/stream?q=${encodeURIComponent(query)}${
+    const streamUrl = `/api/v1/analysis/stream?q=${encodeURIComponent(sanitizedQuery)}${
       currentDocumentId ? `&document_id=${encodeURIComponent(currentDocumentId)}` : ""
     }`;
 

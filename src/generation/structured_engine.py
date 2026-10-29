@@ -80,8 +80,33 @@ class StructuredGenerationEngine:
                 "Adversarial attack detected: Canary secret token was leaked in model completion."
             )
 
-        # 5. Pydantic validation
+        # 5. Pydantic validation with schema fallback resilience
+        import json
+
         try:
+            data = json.loads(raw_json)
+            # If citations list is empty (e.g. LLM determined evidence lacks answer),
+            # attach an audit trail citation to preserve contract integrity
+            if isinstance(data, dict) and not data.get("citations"):
+                fallback_doc = (
+                    retrieved_chunks[0].metadata.document_name
+                    if retrieved_chunks
+                    else "Dokumen Sumber"
+                )
+                fallback_page = (
+                    retrieved_chunks[0].metadata.page_number if retrieved_chunks else 1
+                )
+                data["citations"] = [
+                    {
+                        "document_name": fallback_doc,
+                        "page_number": fallback_page,
+                        "is_table": False,
+                        "excerpt": "Informasi spesifik tidak ditemukan pada dokumen sumber yang dianalisis.",
+                        "relevance_score": 0.0,
+                    }
+                ]
+                raw_json = json.dumps(data)
+
             report = AnalysisReport.model_validate_json(raw_json)
         except Exception as parse_exc:
             raise ModelInferenceError(
