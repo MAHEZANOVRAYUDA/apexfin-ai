@@ -16,7 +16,11 @@ from src.api.dependencies import (
     get_structured_engine,
 )
 from src.domain.entities import AnalysisReport, CitationSource
-from src.domain.exceptions import DocumentNotFoundError
+from src.domain.exceptions import (
+    ApexFinException,
+    DocumentNotFoundError,
+    PromptInjectionDetectedError,
+)
 from src.generation.fact_checker import DeterministicFactChecker
 from src.generation.structured_engine import StructuredGenerationEngine
 from src.retrieval.hybrid_retriever import HybridRetriever
@@ -198,15 +202,56 @@ async def stream_financial_analysis(
             # Step 5: Final Result
             yield {"event": "result", "data": verified_report.model_dump_json()}
             yield {"event": "done", "data": json.dumps({"status": "complete"})}
+        except PromptInjectionDetectedError as pie:
+            # Deliver graceful security defense report on adversarial attempts
+            defense_report = AnalysisReport(
+                query=q,
+                executive_summary=(
+                    "🛡️ **Pertahanan Keamanan Aktif (Adversarial Defense)**: Permintaan kueri ditolak oleh sistem keamanan. "
+                    "Terdeteksi percobaan manipulasi instruksi sistem atau uji penetrasi prompt (Prompt Injection / Adversarial Jailbreak). "
+                    "Sistem ApexFin AI menjaga isolasi penuh dan kerahasiaan token sistem (Canary Guardrail) demi menjamin integritas audit finansial."
+                ),
+                extracted_metrics=[],
+                citations=[
+                    CitationSource(
+                        document_name="Sistem Pertahanan Keamanan & Guardrail",
+                        page_number=1,
+                        is_table=False,
+                        excerpt="Perlindungan injeksi prompt dan cryptographic canary guardrail aktif. Seluruh rahasia sistem dan integritas audit terlindungi.",
+                        relevance_score=1.0,
+                    )
+                ],
+                audit_warnings=[
+                    f"⚠️ Deteksi Keamanan: {pie.detail}",
+                    "🔒 Status Kerahasiaan Token: Terlindungi sepenuhnya, tidak ada kebocoran data rahasia.",
+                ],
+                confidence_score=1.0,
+                model_used="security-guardrail",
+            )
+            yield {"event": "result", "data": defense_report.model_dump_json()}
+            yield {"event": "done", "data": json.dumps({"status": "complete"})}
+        except ApexFinException as exc:
+            yield {
+                "event": "problem",
+                "data": json.dumps(
+                    {
+                        "type": exc.type_uri,
+                        "title": exc.title,
+                        "detail": exc.detail,
+                        "status": exc.status_code,
+                    }
+                ),
+            }
+            yield {"event": "done", "data": json.dumps({"status": "error"})}
         except Exception as exc:
             yield {
                 "event": "problem",
                 "data": json.dumps(
                     {
-                        "type": "https://apexfin.ai/errors/model-inference",
-                        "title": "Model Inference Failed",
+                        "type": "https://apexfin.ai/errors/internal",
+                        "title": "Internal System Error",
                         "detail": str(exc),
-                        "status": 502,
+                        "status": 500,
                     }
                 ),
             }
